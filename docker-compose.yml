@@ -75,4 +75,3 @@ services:
 networks:
   internal:
   external:
-    external: true
