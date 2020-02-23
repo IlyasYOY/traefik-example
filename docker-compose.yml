@@ -1,0 +1,78 @@
+version: "3"
+
+services:
+  traefik:
+    image: "traefik:v2.1"
+    container_name: traefik
+    command:
+      - "--api.insecure=true"
+      - "--providers.docker=true"
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--entrypoints.web.address=:80"
+    restart: always
+    depends_on:
+      - api
+      - web
+    ports:
+      - 80:80
+      - 8080:8080
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock"
+    networks:
+      - external
+
+  web:
+    build:
+      context: web
+      dockerfile: Dockerfile
+    container_name: personal-blog-web
+    restart: always
+    depends_on:
+      - api
+    ports:
+      - 8081:80
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=external"
+      - "traefik.http.routers.web.rule=PathPrefix(`/web`, `/bundle.js`)"
+    networks:
+      - external
+
+  api:
+    build:
+      context: api
+      dockerfile: Dockerfile
+    container_name: personal-blog-api
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=external"
+      - "traefik.http.routers.api.rule=PathPrefix(`/api`)"
+    restart: always
+    ports:
+      - 8082:80
+    depends_on:
+      - postgresdb
+    networks:
+      - internal
+      - external
+
+  postgresdb:
+    image: postgres:alpine
+    container_name: postgresdb
+    restart: always
+    ports:
+      - 5432:5432
+    environment:
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_USER: postgres
+      POSTGRES_DB: postgres
+    networks:
+      - internal
+    volumes:
+      - "./pgdata:/var/lib/postgresql/data"
+
+networks:
+  internal:
+  external:
+    external: true
