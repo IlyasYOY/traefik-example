@@ -1,4 +1,4 @@
-module github.com/IlyasYOY/personl-blog/server
+module github.com/IlyasYOY/personal-blog/server
 
 go 1.13
 
